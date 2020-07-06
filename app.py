@@ -9,6 +9,8 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objects as go
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -170,7 +172,7 @@ app.layout = html.Div(
                 html.Div(
                     [   
 
-                        html.P("Optimiser la recherche les clients :", className="control_label"),
+                        html.P("Optimiser la recherche des clients :", className="control_label"),
                         
                         dcc.RadioItems(
                             id="well_status_selector",
@@ -183,7 +185,7 @@ app.layout = html.Div(
                             className="dcc_control",
                         ),
                         html.P(
-                            "Choix d'un numéro de client :",
+                            "Choix du client :",
                             className="control_label",
                         ),
                         dcc.Dropdown(
@@ -194,11 +196,11 @@ app.layout = html.Div(
                             placeholder='CLIENT_ID',                    
                             className="dcc_control",
                         ),
-                        html.Button("Chercher", id="submit"),           
-                        html.P(
-                            "Choix du 1er critère",
-                            className="control_label",
-                        ),             
+                        # html.Button("Chercher", id="submit"),           
+                        # html.P(
+                        #     "Choix du 1er critère",
+                        #     className="control_label",
+                        # ),             
                         dcc.Dropdown(
                             id="critere_1",
                             options=[{'label': i, 'value': i} for i in test_corrs_removed.columns.values.tolist()],
@@ -206,17 +208,30 @@ app.layout = html.Div(
                             value='AMT_INCOME_TOTAL',
                             className="dcc_control",
                         ),
-                        html.P(id='test'
+                        html.P(id='affichage_crit_1'),
+
+                        html.P(
+                            "Comparaison avec un autre client:",
+                            className="control_label",
                         ),
-                     
-                        html.P("Choix du 2nd critère :", className="control_label"),
                         dcc.Dropdown(
-                            id="critere_2",
-                            options=well_type_options,
+                            id="client_id2",
+                            options=[{'label': i, 'value': i} for i in client_id],
                             multi=False,
-                            value=list(WELL_TYPES.keys()),
+                            value='116949',
+                            placeholder='CLIENT_ID',                    
                             className="dcc_control",
                         ),
+                        #html.P("Choix du 2nd critère :", className="control_label"),
+                        dcc.Dropdown(
+                            id="critere_2",
+                            options=[{'label': i, 'value': i} for i in test_corrs_removed.columns.values.tolist()],
+                            multi=False,
+                            value='AMT_INCOME_TOTAL',
+                            className="dcc_control",
+                        ),
+                        html.P(id='affichage_crit_2'),
+
                     ],
                     className="pretty_container four columns",
                     id="cross-filter-options",
@@ -226,8 +241,8 @@ app.layout = html.Div(
                         html.Div(
                             [
                                 html.Div(
-                                    [html.H6(id="well_text"),],
-                                    id="wells",
+                                    [html.H6(id="defaut_paimentText"), html.P("Probabilité de défaut de paiment")],
+                                    id="defaut_paiment",
                                     className="mini_container",
                                 ),
                                 html.Div(
@@ -236,13 +251,13 @@ app.layout = html.Div(
                                     className="mini_container",
                                 ),
                                 html.Div(
-                                    [html.H6(id="oilText"), html.P("Oil")],
-                                    id="oil",
+                                    [html.H6(id="revenueText"), html.P("Revenues totals")],
+                                    id="revenue",
                                     className="mini_container",
                                 ),
                                 html.Div(
-                                    [html.H6(id="waterText"), html.P("Water")],
-                                    id="water",
+                                    [html.H6(id="jobText"), html.P("Métier")],
+                                    id="job",
                                     className="mini_container",
                                 ),
                             ],
@@ -250,7 +265,7 @@ app.layout = html.Div(
                             className="row container-display",
                         ),
                         html.Div(
-                            [dcc.Graph(id="count_graph")],
+                            [],#dcc.Graph(id="count_graph")
                             id="countGraphContainer",
                             className="pretty_container",
                         ),
@@ -264,7 +279,8 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="main_graph")],
+                    [html.H6('Explication de la probabilité de defaut', style={'text-align':'center'}), 
+                    dcc.Graph(id="main_graph")],
                     className="pretty_container seven columns",
                 ),
                 html.Div(
@@ -274,31 +290,40 @@ app.layout = html.Div(
             ],
             className="row flex-display",
         ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="pie_graph")],
-                    className="pretty_container seven columns",
-                ),
-                html.Div(
-                    [dcc.Graph(id="aggregate_graph")],
-                    className="pretty_container five columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
+        # html.Div(
+        #     [
+        #         html.Div(
+        #             [dcc.Graph(id="pie_graph")],
+        #             className="pretty_container seven columns",
+        #         ),
+        #         html.Div(
+        #             [dcc.Graph(id="aggregate_graph")],
+        #             className="pretty_container five columns",
+        #         ),
+        #     ],
+        #     className="row flex-display",
+        # ),
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
 )
 
 @app.callback(
-    Output('test', 'children'),
+    Output('affichage_crit_1', 'children'),
     [Input('critere_1', 'value'),
      Input('client_id', 'value')]
 
 )
-def update_output(value, client_id):
+def update_crit1(value, client_id):
+    return 'Valeur : {}'.format(test_corrs_removed[value].iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)][0]])
+
+@app.callback(
+    Output('affichage_crit_2', 'children'),
+    [Input('critere_2', 'value'),
+     Input('client_id2', 'value')]
+
+)
+def update_crit1(value, client_id):
     return 'Valeur : {}'.format(test_corrs_removed[value].iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)][0]])
 
 
@@ -313,9 +338,30 @@ def update_age(client_id):
     return '{} ans'.format(abs(int(np.round(age/365, decimals=0))))
 
 
+@app.callback(
+    Output('revenueText', 'children'),
+    [Input('client_id', 'value')]
+)
+
+def update_age(client_id):
+    amt = test_corrs_removed['AMT_INCOME_TOTAL'].iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)][0]]
+    return '{}'.format(int(np.round(amt, decimals=0)))
+
+@app.callback(
+    Output('jobText', 'children'),
+    [Input('client_id', 'value')]
+)
+
+def update_age(client_id):
+    travail = test_corrs_removed['OCCUPATION_TYPE'].iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)][0]]
+  
+    return '{}'.format(travail)
+
+
+
 # Radio -> multi
 @app.callback(
-    Output('well_text', 'children'), 
+    Output('defaut_paimentText', 'children'), 
     #[Input("submit", "n_clicks")],
     [#Input("well_status_selector", "value"), 
     Input('client_id', 'value')]
@@ -335,7 +381,54 @@ def display_status(client_id):
     defaut_precentage = clf_solvable.predict_proba(test_features.iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)]].values.reshape(1, -1))[0][1]
 
     print(defaut_precentage)
-    return 'Probabilité de défaut de paiment : {} %'.format(defaut_precentage*100)
+    return '{} %'.format(defaut_precentage*100)
+
+
+@app.callback(
+    Output('main_graph', 'figure'),
+    [Input('client_id', 'value')]
+)
+
+def update_graph(client_id):
+
+    test_features_filled= test_features.fillna(test_features.median())
+
+    lime1 = LimeTabularExplainer(test_features_filled,
+                                feature_names=test_features_filled.columns,
+                                discretize_continuous=False)
+                                
+
+    exp = lime1.explain_instance(test_features_filled.iloc[1],
+                                clf_solvable.predict_proba,
+                                num_samples=1000)
+
+    exp_list = exp.as_list()
+    exp_keys = []
+    exp_values = []
+    exp_positives = []
+    for i in range(len(exp_list)):
+        exp_keys.append(exp_list[i][0])
+        exp_values.append(exp_list[i][1])
+    # if exp_values[i] <= 0:
+    #   exp_positives.append('green')
+    # elif exp_values[i] > 0:
+    #   exp_positives.append('red')
+
+    df_data = pd.DataFrame(data=[exp_keys,exp_values])
+    df_data = df_data.T
+    df_data.columns=['exp_keys', 'exp_values']
+    df_data = df_data.iloc[np.abs(df_data['exp_values'].values).argsort()]
+    df_data['color'] = df_data.exp_values.apply(lambda x: 'red' if x > 0 else 'green')
+    fig = go.Figure(go.Bar(
+                x=df_data['exp_values'],
+                y=df_data['exp_keys'],
+                orientation='h',
+                marker_color=df_data['color'])            
+                )
+
+  
+    return fig
+
 
 
 # # Helper functions
