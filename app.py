@@ -21,9 +21,6 @@ from joblib import dump, load
 import lightgbm as lgb
 
 
-# # Multi-dropdown options
-# from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
-
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("data").resolve()
@@ -479,4 +476,4 @@ def update_graph_situation(client_id, situation):
 
 # Main
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
