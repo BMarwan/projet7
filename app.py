@@ -37,8 +37,6 @@ server = app.server
 
 test_corrs_removed = pd.read_csv(DATA_PATH.joinpath("test_bureau_corrs_removed.csv"), low_memory=False)
 
-features = pd.read_csv(DATA_PATH.joinpath("features.csv"), low_memory=False)
-features.drop('Unnamed: 0', axis=1, inplace=True)
 test_features = pd.read_csv(DATA_PATH.joinpath("test_features.csv"), low_memory=False)
 test_features.drop('Unnamed: 0', axis=1, inplace=True)
 test_features = test_features.reindex(sorted(test_features.columns), axis=1)
@@ -96,10 +94,7 @@ def calcul_interpretation(clf, client_id):
     for i in range(len(exp_list)):
         exp_keys.append(exp_list[i][0])
         exp_values.append(exp_list[i][1])
-    # if exp_values[i] <= 0:
-    #   exp_positives.append('green')
-    # elif exp_values[i] > 0:
-    #   exp_positives.append('red')
+    
 
     df_data = pd.DataFrame(data=[exp_keys,exp_values])
     df_data = df_data.T
@@ -150,10 +145,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     [
-                        # html.A(
-                        #     html.Button("Learn More", id="learn-more-button"),
-                        #     href="https://plot.ly/dash/pricing/",
-                        # )
+                        
                     ],
                     className="one-third column",
                     id="button",
@@ -192,11 +184,7 @@ app.layout = html.Div(
                             placeholder='CLIENT_ID',                    
                             className="dcc_control",
                         ),
-                        # html.Button("Chercher", id="submit"),           
-                        # html.P(
-                        #     "Choix du 1er critère",
-                        #     className="control_label",
-                        # ),             
+                                
                         dcc.Dropdown(
                             id="critere_1",
                             options=[{'label': i, 'value': i} for i in test_corrs_removed.columns.values.tolist()],
@@ -305,19 +293,7 @@ app.layout = html.Div(
             ],
             className="row flex-display",
         ),
-        # html.Div(
-        #     [
-        #         html.Div(
-        #             [dcc.Graph(id="pie_graph")],
-        #             className="pretty_container seven columns",
-        #         ),
-        #         html.Div(
-        #             [dcc.Graph(id="aggregate_graph")],
-        #             className="pretty_container five columns",
-        #         ),
-        #     ],
-        #     className="row flex-display",
-        # ),
+    
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
