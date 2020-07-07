@@ -41,6 +41,8 @@ features = pd.read_csv(DATA_PATH.joinpath("features.csv"), low_memory=False)
 features.drop('Unnamed: 0', axis=1, inplace=True)
 test_features = pd.read_csv(DATA_PATH.joinpath("test_features.csv"), low_memory=False)
 test_features.drop('Unnamed: 0', axis=1, inplace=True)
+test_features = test_features.reindex(sorted(test_features.columns), axis=1)
+
 
 # test_corrs_removed = test_corrs_removed.sample(n=10, random_state=1)
 # test_corrs_removed = test_corrs_removed.sort_values('SK_ID_CURR')
@@ -287,7 +289,17 @@ app.layout = html.Div(
                     className="pretty_container seven columns",
                 ),
                 html.Div(
-                    [dcc.Graph(id="individual_graph")],
+                    [   html.H6('Comparaison d\'un client avec la totalité des clients', style={'text-align':'center'}),
+                        dcc.Dropdown(
+                            id="situation",
+                            options=[{'label': i, 'value': i} for i in test_features.columns.values.tolist()],
+                            multi=False,
+                            value='AMT_INCOME_TOTAL',
+                            className="dcc_control",
+                        ),
+                        dcc.Graph(id="client_situation")
+                    
+                    ],
                     className="pretty_container five columns",
                 ),
             ],
@@ -449,7 +461,6 @@ def client_similarities(client_id, selector):
     client_id_similaire["SK_ID_CURR"].astype(int)
 
     clients_similaires = clients_similaires[df_data['exp_keys']]
-    print(client_id_similaire)
 
     df_result = pd.concat([client_id_similaire, clients_similaires], axis=1)
 
@@ -466,6 +477,28 @@ def client_similarities(client_id, selector):
                     
                 )
     ]
+
+
+
+@app.callback(
+    Output('client_situation', 'figure'),
+    [Input('client_id', 'value'),
+    Input("situation", "value")]
+)
+
+def update_graph_situation(client_id, situation):
+
+    feature = test_features[situation].iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)][0]]
+    moyenne = test_features[situation].mean()
+    mediane = test_features[situation].median()
+
+    client_situation = pd.DataFrame(data=[feature,moyenne,mediane], columns=['Infos'])
+    client_situation.index=['Client', 'Moyenne', 'Mediane']
+
+    fig = go.Figure([go.Bar(x=client_situation.index, y=client_situation['Infos'])])
+
+  
+    return fig
 
 
 # Main
