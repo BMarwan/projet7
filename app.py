@@ -444,17 +444,21 @@ def client_similarities(client_id, selector):
         clients_similaires = clients_similaires.append(test_features_filled.iloc[i])
         client_id_similaire = client_id_similaire.append(test_corrs_removed["SK_ID_CURR"].iloc[i])
     
-    #client_id_similaire.columns=["SK_ID_CURR"]
+    client_id_similaire = client_id_similaire.T
+    client_id_similaire.columns=["SK_ID_CURR"]
+    client_id_similaire["SK_ID_CURR"].astype(int)
 
     clients_similaires = clients_similaires[df_data['exp_keys']]
     print(client_id_similaire)
 
+    df_result = pd.concat([client_id_similaire, clients_similaires], axis=1)
+
     return [
-                html.H6('Comparaison avec les 5 clients les plus ressemblants', style={'text-align':'center'}),
+                html.H6('Comparaison avec les 4 clients les plus ressemblants', style={'text-align':'center'}),
                 dash_table.DataTable(
                     id='table',
-                    columns=[{"name": i, "id": i} for i in clients_similaires.columns],
-                    data=clients_similaires.to_dict("rows"),
+                    columns=[{"name": i, "id": i} for i in df_result.columns],
+                    data=df_result.to_dict("rows"),
                     # page_current=0,
                     # page_size=PAGE_SIZE,
                     # page_action='custom',
