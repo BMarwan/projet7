@@ -112,7 +112,7 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.Img(
-                            src=app.get_asset_url("assets/logo.png"),
+                            src=app.get_asset_url("logo.png"),
                             id="plotly-image",
                             style={
                                 "height": "200",
