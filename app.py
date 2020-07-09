@@ -46,8 +46,10 @@ client_id = test_corrs_removed["SK_ID_CURR"].tolist()
 
 #Load models
 
-clf_non_solvable = load(DATA_PATH.joinpath('lgb_pos_weights.joblib'))
-clf_solvable = load(DATA_PATH.joinpath('lgb_neg_weights.joblib'))
+#clf_non_solvable = load(DATA_PATH.joinpath('lgb_pos_weights.joblib'))
+#clf_solvable = load(DATA_PATH.joinpath('lgb_neg_weights.joblib'))
+clf = load(DATA_PATH.joinpath('lgb_tun.joblib'))
+
 
 # Create global chart template
 mapbox_access_token = "pk.eyJ1IjoicGxvdGx5bWFwYm94IiwiYSI6ImNrOWJqb2F4djBnMjEzbG50amg0dnJieG4ifQ.Zme1-Uzoi75IaFbieBDl3A"
@@ -157,18 +159,18 @@ app.layout = html.Div(
                 html.Div(
                     [   
 
-                        html.P("Optimiser la recherche des clients :", className="control_label"),
+                        # html.P("Optimiser la recherche des clients :", className="control_label"),
                         
-                        dcc.RadioItems(
-                            id="model_selector",
-                            options=[
-                                {"label": "Solvable ", "value": "solvable"},
-                                {"label": "Non solvable ", "value": "nonsolvable"},
-                            ],
-                            value="solvable",
-                            labelStyle={"display": "inline-block"},
-                            className="dcc_control",
-                        ),
+                        # dcc.RadioItems(
+                        #     id="model_selector",
+                        #     options=[
+                        #         {"label": "Solvable ", "value": "solvable"},
+                        #         {"label": "Non solvable ", "value": "nonsolvable"},
+                        #     ],
+                        #     value="solvable",
+                        #     labelStyle={"display": "inline-block"},
+                        #     className="dcc_control",
+                        # ),
                         html.P(
                             "Choix du client :",
                             className="control_label",
@@ -350,16 +352,17 @@ def update_age(client_id):
 # Radio -> multi
 @app.callback(
     Output('defaut_paimentText', 'children'), 
-    [Input("model_selector", "value"), 
+    [#Input("model_selector", "value"), 
     Input('client_id', 'value')]
 )
-def display_status(selector, client_id):
-    if selector == "solvable":
-        clf = clf_solvable
+def display_status(client_id):
+    # if selector == "solvable":
+    #     clf = clf_solvable
 
-    elif selector == "nonsolvable":
-        clf = clf_non_solvable
-         
+    # elif selector == "nonsolvable":
+    #     clf = clf_non_solvable
+    
+ 
     defaut_precentage = clf.predict_proba(test_features.iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)]].values.reshape(1, -1))[0][1]
     return '{} %'.format(int(np.round(defaut_precentage*100, decimals=0)))
 
@@ -367,16 +370,17 @@ def display_status(selector, client_id):
 @app.callback(
     Output('main_graph', 'figure'),
     [Input('client_id', 'value'),
-    Input("model_selector", "value")]
+    #Input("model_selector", "value")
+    ]
 )
 
-def update_graph(client_id, selector):
+def update_graph(client_id):
 
-    if selector == "solvable":
-        clf = clf_solvable
+    # if selector == "solvable":
+    #     clf = clf_solvable
 
-    elif selector == "nonsolvable":
-        clf = clf_non_solvable
+    # elif selector == "nonsolvable":
+    #     clf = clf_non_solvable
 
     df_data = calcul_interpretation(clf, client_id)
 
@@ -393,16 +397,17 @@ def update_graph(client_id, selector):
 @app.callback(
     Output('countGraphContainer', 'children'),
     [Input('client_id', 'value'),
-     Input("model_selector", "value")]
+     #Input("model_selector", "value")
+     ]
 )
 
-def client_similarities(client_id, selector):
+def client_similarities(client_id):
 
-    if selector == "solvable":
-        clf = clf_solvable
+    # if selector == "solvable":
+    #     clf = clf_solvable
 
-    elif selector == "nonsolvable":
-        clf = clf_non_solvable
+    # elif selector == "nonsolvable":
+    #     clf = clf_non_solvable
 
     test_features_filled = test_features.fillna(test_features.median())
 
