@@ -214,6 +214,7 @@ app.layout = html.Div(
                             className="dcc_control",
                         ),
                         html.P(id='affichage_crit_2'),
+                        html.P(id='score_client_id2'),
 
                     ],
                     className="pretty_container four columns",
@@ -349,7 +350,6 @@ def update_age(client_id):
 
 
 
-# Radio -> multi
 @app.callback(
     Output('defaut_paimentText', 'children'), 
     [#Input("model_selector", "value"), 
@@ -361,10 +361,19 @@ def display_status(client_id):
 
     # elif selector == "nonsolvable":
     #     clf = clf_non_solvable
-    
- 
+     
     defaut_precentage = clf.predict_proba(test_features.iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)]].values.reshape(1, -1))[0][1]
     return '{} %'.format(int(np.round(defaut_precentage*100, decimals=0)))
+
+
+@app.callback(
+    Output('score_client_id2', 'children'), 
+    [Input('client_id2', 'value')]
+)
+def display_status(client_id):  
+ 
+    defaut_precentage = clf.predict_proba(test_features.iloc[test_corrs_removed.index[test_corrs_removed['SK_ID_CURR']==int(client_id)]].values.reshape(1, -1))[0][1]
+    return 'Probabilité de défaut de paiment pour '+str(client_id)+' : {} %'.format(str(int(np.round(defaut_precentage*100, decimals=0))))
 
 
 @app.callback(
@@ -424,6 +433,7 @@ def client_similarities(client_id):
     
     clients_similaires = pd.DataFrame()
     client_id_similaire = pd.DataFrame()
+    client_prob = []
 
     
     #Interprétation lime
@@ -433,14 +443,27 @@ def client_similarities(client_id):
     for i in indices:
         clients_similaires = clients_similaires.append(test_features_filled.iloc[i])
         client_id_similaire = client_id_similaire.append(test_corrs_removed["SK_ID_CURR"].iloc[i])
-    
+
+    for i in range(len(indices[0])):
+        client_prob.append(clf.predict_proba(test_features.iloc[indices[0][i]].values.reshape(1,-1))[0][1])  
+
+
+
     client_id_similaire = client_id_similaire.T
     client_id_similaire.columns=["SK_ID_CURR"]
     client_id_similaire["SK_ID_CURR"].astype(int)
 
+    client_prob = pd.DataFrame(client_prob)
+    client_prob.columns=["Probabilité de défaut de paiment (en%)"]
+    client_prob["Probabilité de défaut de paiment (en%)"] = client_prob["Probabilité de défaut de paiment (en%)"].apply(lambda x: int(np.round(x*100, decimals=0)))
+    client_prob.index = client_id_similaire.index
+
+
     clients_similaires = clients_similaires[df_data['exp_keys']]
 
-    df_result = pd.concat([client_id_similaire, clients_similaires], axis=1)
+    df_result = pd.concat([client_id_similaire, client_prob, clients_similaires], axis=1)
+    
+    #df_result = pd.concat([df_result, clients_similaires], axis=1)
 
     return [
                 html.H6('Comparaison avec les 4 clients les plus ressemblants', style={'text-align':'center'}),
